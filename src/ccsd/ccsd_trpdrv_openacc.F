@@ -31,6 +31,7 @@
       double precision, allocatable, device :: f2t(:,:)
       double precision, allocatable, device :: f3t(:,:)
       double precision, allocatable, device :: f4t(:,:)
+#if 0      
       double precision, allocatable, pinned :: Tij(:), Tkj(:)
       double precision, allocatable, pinned :: Tia(:), Tka(:)
       double precision, allocatable, pinned :: Xia(:), Xka(:)
@@ -39,6 +40,16 @@
       double precision, allocatable, pinned :: Kia(:), Kka(:)
       double precision, allocatable, pinned :: Kij(:), Kkj(:)
       double precision, allocatable, pinned :: Dja(:), Djka(:), Djia(:)
+#else
+      double precision, allocatable, device :: Tij(:), Tkj(:)
+      double precision, allocatable, device :: Tia(:), Tka(:)
+      double precision, allocatable, device :: Xia(:), Xka(:)
+      double precision, allocatable, device :: Jia(:), Jka(:)
+      double precision, allocatable, device :: Jij(:), Jkj(:)
+      double precision, allocatable, device :: Kia(:), Kka(:)
+      double precision, allocatable, device :: Kij(:), Kkj(:)
+      double precision, allocatable, device :: Dja(:), Djka(:), Djia(:)
+#endif
       double precision, allocatable, device :: xTij(:), xTkj(:)
       double precision, allocatable, device :: xTia(:), xTka(:)
       double precision, allocatable, device :: xXia(:), xXka(:)
@@ -110,9 +121,56 @@
       integer(INT32) :: shi
       type(cublasHandle) :: handle(8)
       integer(kind=cuda_stream_kind) :: stream(8)
+
+      !#define USE_CCSD_DGEMM_BATCH 1
+!defined(USE_CCSD_DGEMM_BATCH)
       integer(INT32) :: nv4, no4 ! cublasDgemm requires 32-bit integers
-      integer(INT32), parameter :: cu_op_n = CUBLAS_OP_N
-      integer(INT32), parameter :: cu_op_t = CUBLAS_OP_T
+      integer(INT32), parameter :: batch1=4, batch2=4, batch3=8
+      integer, parameter :: cu_op_n = CUBLAS_OP_N
+      integer, parameter :: cu_op_t = CUBLAS_OP_T
+      ! The following variables are used when calling dgemm_batch.
+      type(c_devptr), device, dimension(batch1) :: a_array1
+      type(c_devptr), device, dimension(batch1) :: b_array1
+      type(c_devptr), device, dimension(batch1) :: c_array1
+      type(c_devptr), device, dimension(batch2) :: a_array2
+      type(c_devptr), device, dimension(batch2) :: b_array2
+      type(c_devptr), device, dimension(batch2) :: c_array2
+      type(c_devptr), device, dimension(batch3) :: a_array3
+      type(c_devptr), device, dimension(batch3) :: b_array3
+      type(c_devptr), device, dimension(batch3) :: c_array3
+      double precision       :: alpha, beta
+
+#if 0
+      double precision, allocatable, device :: Aar(:,:,:)
+      double precision, allocatable, device :: Bar(:,:,:)
+      double precision, allocatable, device :: Car(:,:,:)
+      integer idx
+
+      nv4 = nvir ! no possibility of overflow
+      no4 = nocc
+      allocate( Aar(nvir,nvir,batch1) )
+      allocate( Bar(nvir,nvir,batch1) )
+      allocate( Car(nvir,nvir,batch1) )
+      
+      ! Fill A,B diagonals with sin(i) data, C diagonal with cos(i)^2
+      ! Matrices are arranged column major
+      do k=1,batch1
+        do j=1,nvir
+          do i=1,nvir
+            if (i==j) then
+              !idx = real(j*nvir + i)
+              Aar(i,j,k) = 1.0d0!k*sin(idx)
+              Bar(i,j,k) = 1.0d0!sin(idx)
+              Car(i,j,k) = 1.0d0!k*cos(idx) * cos(idx)
+            else
+              Aar(i,j,k) = 0.0
+              Bar(i,j,k) = 0.0
+              Car(i,j,k) = 0.0
+            endif
+          enddo ! i
+        enddo ! j
+      enddo ! k
+#endif
 !
       nodes = ga_nnodes()
       me = ga_nodeid()
@@ -404,7 +462,6 @@
                            if (err.ne.0) then
                              call errquit('cudaMemcpyAsync',err,UNKNOWN_ERR)
                            endif
-
                            ! arrays and thus copies contribute to more than one CUBLAS call
                            ! but the copies on streams 1:4 and 5:8 are separable.
                            do shi=1,4
@@ -443,7 +500,178 @@
                         else
                            call qexit('accwait',0)
                         endif
+#if 1
+!defined(USE_CCSD_DGEMM_BATCH)
 
+
+                        ! first two batches can be executed
+                        ! simultaneously
+  
+#if 0                    
+
+                        a_array1(1) = c_devloc(Aar(1,1,1))
+                        b_array1(1) = c_devloc(Bar(1,1,1))
+                        c_array1(1) = c_devloc(Car(1,1,1))
+                        a_array1(2) = c_devloc(Aar(1,1,2))
+                        b_array1(2) = c_devloc(Bar(1,1,2))
+                        c_array1(2) = c_devloc(Car(1,1,2))
+                        a_array1(3) = c_devloc(Aar(1,1,3))
+                        b_array1(3) = c_devloc(Bar(1,1,3))
+                        c_array1(3) = c_devloc(Car(1,1,3))
+                        a_array1(4) = c_devloc(Aar(1,1,4))
+                        b_array1(4) = c_devloc(Bar(1,1,4))
+                        c_array1(4) = c_devloc(Car(1,1,4))
+                        a_array2(1) = c_devloc(Aar(1,1,1))
+                        b_array2(1) = c_devloc(Bar(1,1,1))
+                        c_array2(1) = c_devloc(Car(1,1,1))
+                        a_array2(2) = c_devloc(Aar(1,1,2))
+                        b_array2(2) = c_devloc(Bar(1,1,2))
+                        c_array2(2) = c_devloc(Car(1,1,2))
+                        a_array2(3) = c_devloc(Aar(1,1,3))
+                        b_array2(3) = c_devloc(Bar(1,1,3))
+                        c_array2(3) = c_devloc(Car(1,1,3))
+                        a_array2(4) = c_devloc(Aar(1,1,4))
+                        b_array2(4) = c_devloc(Bar(1,1,4))
+                        c_array2(4) = c_devloc(Car(1,1,4))
+                        a_array3(1) = c_devloc(Aar(1,1,1))
+                        b_array3(1) = c_devloc(Bar(1,1,1))
+                        c_array3(1) = c_devloc(Car(1,1,1))
+                        a_array3(2) = c_devloc(Aar(1,1,2))
+                        b_array3(2) = c_devloc(Bar(1,1,2))
+                        c_array3(2) = c_devloc(Car(1,1,2))
+                        a_array3(3) = c_devloc(Aar(1,1,3))
+                        b_array3(3) = c_devloc(Bar(1,1,3))
+                        c_array3(3) = c_devloc(Car(1,1,3))
+                        a_array3(4) = c_devloc(Aar(1,1,4))
+                        b_array3(4) = c_devloc(Bar(1,1,4))
+                        c_array3(4) = c_devloc(Car(1,1,4))
+#endif
+                        a_array1(1) = c_devloc(Jia(1))
+                        a_array1(2) = c_devloc(Kia(1))
+                        a_array1(3) = c_devloc(Jka(1+(k-klo)*lnvv))
+                        a_array1(4) = c_devloc(Kka(1+(k-klo)*lnvv))
+                        a_array2(1) = c_devloc(Jia(1))
+                        a_array2(2) = c_devloc(Kia(1))
+                        a_array2(3) = c_devloc(Jka(1+(k-klo)*lnvv))
+                        a_array2(4) = c_devloc(Kka(1+(k-klo)*lnvv))
+
+                        b_array1(1) = c_devloc(Tkj(1+(k-klo)*lnvv))
+                        b_array1(2) = c_devloc(Tkj(1+(k-klo)*lnvv))
+                        b_array1(3) = c_devloc(Tij(1))
+                        b_array1(4) = c_devloc(Tij(1))
+                        
+                        b_array2(1) = c_devloc(Tkj(1+(k-klo)*lnvv))
+                        b_array2(2) = c_devloc(Tkj(1+(k-klo)*lnvv))
+                        b_array2(3) = c_devloc(Tij(1))
+                        b_array2(4) = c_devloc(Tij(1))
+
+                        c_array1(1) = c_devloc(f1n(1,1))
+                        c_array1(2) = c_devloc(f2n(1,1))
+                        c_array1(3) = c_devloc(f1t(1,1))
+                        c_array1(4) = c_devloc(f2t(1,1))
+                        
+                        c_array2(1) = c_devloc(f3n(1,1))
+                        c_array2(2) = c_devloc(f4n(1,1))
+                        c_array2(3) = c_devloc(f3t(1,1))
+                        c_array2(4) = c_devloc(f4t(1,1))
+
+                        ! third batch executed afterwards
+
+                        a_array3(1) = c_devloc(Tia(1))
+                        a_array3(2) = c_devloc(Xia(1))
+                        a_array3(3) = c_devloc(Tia(1))
+                        a_array3(4) = c_devloc(Xia(1))
+                        a_array3(5) = c_devloc(Tka(1+(k-klo)*lnov))
+                        a_array3(6) = c_devloc(Xka(1+(k-klo)*lnov))
+                        a_array3(7) = c_devloc(Tka(1+(k-klo)*lnov))
+                        a_array3(8) = c_devloc(Xka(1+(k-klo)*lnov))
+
+                        b_array3(1) = c_devloc(Kkj(1+(k-klo)*lnov))
+                        b_array3(2) = c_devloc(Kkj(1+(k-klo)*lnov))
+                        b_array3(3) = c_devloc(Jkj(1+(k-klo)*lnov))
+                        b_array3(4) = c_devloc(Jkj(1+(k-klo)*lnov))
+                        b_array3(5) = c_devloc(Kij(1))
+                        b_array3(6) = c_devloc(Kij(1))
+                        b_array3(7) = c_devloc(Jij(1))
+                        b_array3(8) = c_devloc(Jij(1))
+
+                        c_array3(1) = c_devloc(f1n(1,1))
+                        c_array3(2) = c_devloc(f2n(1,1))
+                        c_array3(3) = c_devloc(f3n(1,1))
+                        c_array3(4) = c_devloc(f4n(1,1))
+                        c_array3(5) = c_devloc(f1t(1,1))
+                        c_array3(6) = c_devloc(f2t(1,1))
+                        c_array3(7) = c_devloc(f3t(1,1))
+                        c_array3(8) = c_devloc(f4t(1,1))
+
+
+                        !batch1 = 4
+                        !batch2 = 4
+                        !batch3 = 8
+
+                        alpha = 1.0d0
+                        beta = 0.0d0
+
+
+                        err = cublasDgemmBatched(
+     &                        handle(1),
+     &                        CUBLAS_OP_N, 
+     &                        CUBLAS_OP_T,
+     &                        nv4, nv4, nv4, 
+     &                        alpha,
+     &                        a_array1, nv4,
+     &                        b_array1, nv4,
+     &                        beta,
+     &                        c_array1, nv4,
+     &                        batch1)
+                        if (err.ne.0) then
+                          call errquit('cublasDgemmBatched',err,
+     &                                  UNKNOWN_ERR)
+                        endif
+
+                        err = cublasDgemmBatched(
+     &                        handle(2),
+     &                        CUBLAS_OP_N,
+     &                        CUBLAS_OP_N,
+     &                        nv4, nv4, nv4,
+     &                        1.0d0,
+     &                        a_array2, nv4,
+     &                        b_array2, nv4,
+     &                        0.0d0,
+     &                        c_array2, nv4,
+     &                        batch2)
+
+                        if (err.ne.0) then
+                          call errquit('cublasDgemmBatched',err,
+     &                                 UNKNOWN_ERR)
+                        endif
+
+                        do shi=1,2
+                          err = cudaStreamSynchronize(stream(shi))
+                          if (err.ne.0) then
+                            call errquit('cudaStreamSync',err,
+     &                                   UNKNOWN_ERR)
+                          endif
+                        enddo
+
+                        err = cublasDgemmBatched(
+     &                        handle(1),
+     &                        CUBLAS_OP_N,
+     &                        CUBLAS_OP_T,
+     &                        nv4, nv4, nv4,
+     &                        -1.0d0,
+     &                        a_array3, nv4,
+     &                        b_array3, no4,
+     &                        1.0d0,
+     &                        c_array3, no4,
+     &                        batch3)
+                        if (err.ne.0) then
+                          call errquit('cublasGemmBatched',
+     &                                  err,UNKNOWN_ERR)
+                        endif
+
+
+#else
                         err = cublasDgemm_v2(handle(1),
      &                        cu_op_n,cu_op_t,
      &                        nv4,nv4,nv4,1.0d0,
@@ -588,7 +816,7 @@
                         if (err.ne.0) then
                           call errquit('cublasDgemm_v2',err,UNKNOWN_ERR)
                         endif
-
+#endif
                         err = cudaDeviceSynchronize()
                         if (err.ne.0) then
                           call errquit('cudaDeviceSync',err,UNKNOWN_ERR)
@@ -761,6 +989,7 @@
       deallocate( Tij, Tkj, Tia, Tka, Xia, Xka,
      &            Jia, Jka, Kia, Kka, Jij, Jkj, Kij, Kkj,
      &            Dja, Djka, Djia, stat=alloc_error)
+
       if (alloc_error.ne.0) call errquit('free TKJKD',1,MA_ERR)
       deallocate( xTij, xTkj, xTia, xTka, xXia, xXka,
      &            xJia, xJka, xKia, xKka, xJij, xJkj, xKij, xKkj,
