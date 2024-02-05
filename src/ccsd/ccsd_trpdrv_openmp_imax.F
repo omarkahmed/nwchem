@@ -19,6 +19,7 @@
       use omp_lib
       use onemkl_blas_omp_offload_ilp64
       use reduction_data
+      USE ITTNOTIFY
       implicit none
 !
 #include "errquit.fh"
@@ -372,6 +373,12 @@
      &  map(to:Xka,Jij,Xia,Jkj,Jka,Tij,Kka)
       
       do klo = 1, nocc, kchunk
+         if (a-(ncor+nocc)+((klo-1)/kchunk)*nvir.eq.
+     &         (nocc/kchunk)*nvir/2) then
+            write(*,*) "Starting collection, iteration: ",
+     &                   (a-(ncor+nocc)+((klo-1)/kchunk)*nvir)
+            CALL ITT_RESUME()
+         endif
          akold=0
          khi = min(nocc, klo+kchunk-1)
          do a=oseg_lo,oseg_hi
@@ -964,6 +971,12 @@
             endif
                end if
             end do
+            if (a-(ncor+nocc)+((klo-1)/kchunk)*nvir.eq.
+     &         (nocc/kchunk)*nvir/2) then
+              write(*,*) "Stopping collection, iteration: ",
+     &                   (a-(ncor+nocc)+((klo-1)/kchunk)*nvir)
+              CALL ITT_PAUSE()
+            endif
          end do
       end do
 
