@@ -41,7 +41,7 @@
       double precision, allocatable, pinned :: Kij(:), Kkj(:)
       double precision, allocatable, pinned :: Dja(:), Djka(:), Djia(:)
 #else
-      double precision, allocatable, device :: Tij(:), Tkj(:)
+      double precision, allocatable, device:: Tij(:), Tkj(:)
       double precision, allocatable, device :: Tia(:), Tka(:)
       double precision, allocatable, device :: Xia(:), Xka(:)
       double precision, allocatable, device :: Jia(:), Jka(:)
@@ -129,6 +129,7 @@
       integer, parameter :: cu_op_n = CUBLAS_OP_N
       integer, parameter :: cu_op_t = CUBLAS_OP_T
       ! The following variables are used when calling dgemm_batch.
+#if 1      
       type(c_devptr), device, dimension(batch1) :: a_array1
       type(c_devptr), device, dimension(batch1) :: b_array1
       type(c_devptr), device, dimension(batch1) :: c_array1
@@ -138,8 +139,20 @@
       type(c_devptr), device, dimension(batch3) :: a_array3
       type(c_devptr), device, dimension(batch3) :: b_array3
       type(c_devptr), device, dimension(batch3) :: c_array3
+#else
+      type(c_devptr), dimension(batch1) :: a_array1
+      type(c_devptr), dimension(batch1) :: b_array1
+      type(c_devptr), dimension(batch1) :: c_array1
+      type(c_devptr), dimension(batch2) :: a_array2
+      type(c_devptr), dimension(batch2) :: b_array2
+      type(c_devptr), dimension(batch2) :: c_array2
+      type(c_devptr), dimension(batch3) :: a_array3
+      type(c_devptr), dimension(batch3) :: b_array3
+      type(c_devptr), dimension(batch3) :: c_array3
+#endif
       double precision       :: alpha, beta
 
+      print*, "Delcared variables"
 #if 0
       double precision, allocatable, device :: Aar(:,:,:)
       double precision, allocatable, device :: Bar(:,:,:)
@@ -191,6 +204,8 @@
         err = cublasSetStream(handle(shi), stream(shi))
         if (err.ne.0) call errquit('cublasSetStream',err,UNKNOWN_ERR)
       end do
+
+      print*, "Setup CUDA streams"
 !
 ! device-only temp arrays
 ! produced by DGEMM, consumed by TENGY
@@ -238,6 +253,7 @@
      &          stat=alloc_error)
       if (alloc_error.ne.0) call errquit('TKJKD GPU alloc',1,MA_ERR)
 
+      print*, "Allocated data"
       tt1 = util_wallsec()
       if (me.eq.0) then
         write(6,500) tt1-tt0
@@ -546,6 +562,8 @@
                         b_array3(4) = c_devloc(Bar(1,1,4))
                         c_array3(4) = c_devloc(Car(1,1,4))
 #endif
+                        
+                        print*, "Assigning batch pointers"
                         a_array1(1) = c_devloc(Jia(1))
                         a_array1(2) = c_devloc(Kia(1))
                         a_array1(3) = c_devloc(Jka(1+(k-klo)*lnvv))
@@ -612,7 +630,7 @@
                         alpha = 1.0d0
                         beta = 0.0d0
 
-
+                        print*, "starting dgemmbatch1"
                         err = cublasDgemmBatched(
      &                        handle(1),
      &                        CUBLAS_OP_N, 
@@ -628,6 +646,8 @@
                           call errquit('cublasDgemmBatched',err,
      &                                  UNKNOWN_ERR)
                         endif
+
+                        print*, "starting dgemmbatch2"
 
                         err = cublasDgemmBatched(
      &                        handle(2),
@@ -653,6 +673,8 @@
      &                                   UNKNOWN_ERR)
                           endif
                         enddo
+
+                        print*, "starting dgemmbatch3"
 
                         err = cublasDgemmBatched(
      &                        handle(1),
