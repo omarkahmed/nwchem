@@ -575,63 +575,92 @@
 #else
                         
                         print*, "Assigning batch pointers"
-                        a_array1(1) = c_devloc(LOC(Jia(1)))
-                        a_array1(2) = c_devloc(LOC(Kia(1)))
+
+                        a_array1(1) = c_devloc(Jia(:))
+                        a_array1(2) = c_devloc(Kia(:))
+!!$acc data present(Jka, Kka, Tkj, Tka, Xka, Tka, Xka, KKj, Jkj, a_array1)
+!$acc kernels
                         a_array1(3) = c_devloc(LOC(Jka(1+(k-klo)*lnvv)))
-                        a_array1(4) = c_devloc(LOC(Kka(1+(k-klo)*lnvv)))
-                        a_array2(1) = c_devloc(LOC(Jia(1)))
-                        a_array2(2) = c_devloc(LOC(Kia(1)))
-                        a_array2(3) = c_devloc(LOC(Jka(1+(k-klo)*lnvv)))
-                        a_array2(4) = c_devloc(LOC(Kka(1+(k-klo)*lnvv)))
+!$acc end kernels
+                        !a_array1(3) = c_devloc(Jka(:))
+                        !a_array1(4) = c_devloc(Kka(1+(k-klo)*lnvv))
+                        a_array1(4) = c_devloc(Kka(:))
+                        a_array2(1) = c_devloc(Jia(:))
+                        a_array2(2) = c_devloc(Kia(:))
+                        !a_array2(3) = c_devloc(LOC(Jka(1+(k-klo)*lnvv)))
+                        a_array2(3) = c_devloc(Jka(:))
+                        !a_array2(4) = c_devloc(LOC(Kka(1+(k-klo)*lnvv)))
+                        a_array2(4) = c_devloc(Kka(:))
 
-                        b_array1(1) = c_devloc(LOC(Tkj(1+(k-klo)*lnvv)))
-                        b_array1(2) = c_devloc(LOC(Tkj(1+(k-klo)*lnvv)))
-                        b_array1(3) = c_devloc(LOC(Tij(1)))
-                        b_array1(4) = c_devloc(LOC(Tij(1)))
+                        !b_array1(1) = c_devloc(LOC(Tkj(1+(k-klo)*lnvv)))
+                        b_array1(1) = c_devloc(Tkj(:))
+                        !b_array1(2) = c_devloc(LOC(Tkj(1+(k-klo)*lnvv)))
+                        b_array1(2) = c_devloc(Tkj(:))
+                        b_array1(3) = c_devloc(Tij(:))
+                        b_array1(4) = c_devloc(Tij(:))
                         
-                        b_array2(1) = c_devloc(LOC(Tkj(1+(k-klo)*lnvv)))
-                        b_array2(2) = c_devloc(LOC(Tkj(1+(k-klo)*lnvv)))
-                        b_array2(3) = c_devloc(LOC(Tij(1)))
-                        b_array2(4) = c_devloc(LOC(Tij(1)))
+                        !b_array2(1) = c_devloc(LOC(Tkj(1+(k-klo)*lnvv)))
+                        b_array2(1) = c_devloc(Tkj(:))
+                        !b_array2(2) = c_devloc(LOC(Tkj(1+(k-klo)*lnvv)))
+                        b_array2(2) = c_devloc(Tkj(:))
+                        b_array2(3) = c_devloc(Tij(:))
+                        b_array2(4) = c_devloc(Tij(:))
 
-                        c_array1(1) = c_devloc(LOC(f1n(1,1)))
-                        c_array1(2) = c_devloc(LOC(f2n(1,1)))
-                        c_array1(3) = c_devloc(LOC(f1t(1,1)))
-                        c_array1(4) = c_devloc(LOC(f2t(1,1)))
+                        c_array1(1) = c_devloc(f1n(:,:))
+                        c_array1(2) = c_devloc(f2n(:,:))
+                        c_array1(3) = c_devloc(f1t(:,:))
+                        c_array1(4) = c_devloc(f2t(:,:))
                         
-                        c_array2(1) = c_devloc(LOC(f3n(1,1)))
-                        c_array2(2) = c_devloc(LOC(f4n(1,1)))
-                        c_array2(3) = c_devloc(LOC(f3t(1,1)))
-                        c_array2(4) = c_devloc(LOC(f4t(1,1)))
+                        c_array2(1) = c_devloc(f3n(:,:))
+                        c_array2(2) = c_devloc(f4n(:,:))
+                        c_array2(3) = c_devloc(f3t(:,:))
+                        c_array2(4) = c_devloc(f4t(:,:))
 
                         ! third batch executed afterwards
 
-                        a_array3(1) = c_devloc(LOC(Tia(1)))
-                        a_array3(2) = c_devloc(LOC(Xia(1)))
-                        a_array3(3) = c_devloc(LOC(Tia(1)))
-                        a_array3(4) = c_devloc(LOC(Xia(1)))
-                        a_array3(5) = c_devloc(LOC(Tka(1+(k-klo)*lnov)))
-                        a_array3(6) = c_devloc(LOC(Xka(1+(k-klo)*lnov)))
-                        a_array3(7) = c_devloc(LOC(Tka(1+(k-klo)*lnov)))
-                        a_array3(8) = c_devloc(LOC(Xka(1+(k-klo)*lnov)))
+                        a_array3(1) = c_devloc(Tia(:))
+                        a_array3(2) = c_devloc(Xia(:))
+                        a_array3(3) = c_devloc(Tia(:))
+                        a_array3(4) = c_devloc(Xia(:))
+                        !a_array3(5) = c_devloc(LOC(Tka(1+(k-klo)*lnov)))
+                        a_array3(5) = c_devloc(Tka(:))
+                        !a_array3(6) = c_devloc(LOC(Xka(1+(k-klo)*lnov)))
+                        a_array3(6) = c_devloc(Xka(:))
+                        !a_array3(7) = c_devloc(LOC(Tka(1+(k-klo)*lnov)))
+                        a_array3(7) = c_devloc(Tka(:))
+                        !a_array3(8) = c_devloc(LOC(Xka(1+(k-klo)*lnov)))
+                        a_array3(8) = c_devloc(Xka(:))
 
-                        b_array3(1) = c_devloc(LOC(Kkj(1+(k-klo)*lnov)))
-                        b_array3(2) = c_devloc(LOC(Kkj(1+(k-klo)*lnov)))
-                        b_array3(3) = c_devloc(LOC(Jkj(1+(k-klo)*lnov)))
-                        b_array3(4) = c_devloc(LOC(Jkj(1+(k-klo)*lnov)))
-                        b_array3(5) = c_devloc(LOC(Kij(1)))
-                        b_array3(6) = c_devloc(LOC(Kij(1)))
-                        b_array3(7) = c_devloc(LOC(Jij(1)))
-                        b_array3(8) = c_devloc(LOC(Jij(1)))
+                        !b_array3(1) = c_devloc(LOC(Kkj(1+(k-klo)*lnov)))
+                        b_array3(1) = c_devloc(Kkj(:))
+                        !b_array3(2) = c_devloc(LOC(Kkj(1+(k-klo)*lnov)))
+                        b_array3(2) = c_devloc(Kkj(:))
+                        !b_array3(3) = c_devloc(LOC(Jkj(1+(k-klo)*lnov)))
+                        b_array3(3) = c_devloc(Jkj(:))
+                        !b_array3(4) = c_devloc(LOC(Jkj(1+(k-klo)*lnov)))
+                        b_array3(4) = c_devloc(Jkj(:))
+                        b_array3(5) = c_devloc(Kij(:))
+                        b_array3(6) = c_devloc(Kij(:))
+                        b_array3(7) = c_devloc(Jij(:))
+                        b_array3(8) = c_devloc(Jij(:))
 
-                        c_array3(1) = c_devloc(LOC(f1n(1,1)))
-                        c_array3(2) = c_devloc(LOC(f2n(1,1)))
-                        c_array3(3) = c_devloc(LOC(f3n(1,1)))
-                        c_array3(4) = c_devloc(LOC(f4n(1,1)))
-                        c_array3(5) = c_devloc(LOC(f1t(1,1)))
-                        c_array3(6) = c_devloc(LOC(f2t(1,1)))
-                        c_array3(7) = c_devloc(LOC(f3t(1,1)))
-                        c_array3(8) = c_devloc(LOC(f4t(1,1)))
+                        !c_array3(1) = c_devloc(LOC(f1n(1,1)))
+                        !c_array3(2) = c_devloc(LOC(f2n(1,1)))
+                        !c_array3(3) = c_devloc(LOC(f3n(1,1)))
+                        !c_array3(4) = c_devloc(LOC(f4n(1,1)))
+                        !c_array3(5) = c_devloc(LOC(f1t(1,1)))
+                        !c_array3(6) = c_devloc(LOC(f2t(1,1)))
+                        !c_array3(7) = c_devloc(LOC(f3t(1,1)))
+                        !c_array3(8) = c_devloc(LOC(f4t(1,1)))
+                        c_array3(1) = c_devloc(f1n(:,:))
+                        c_array3(2) = c_devloc(f2n(:,:))
+                        c_array3(3) = c_devloc(f3n(:,:))
+                        c_array3(4) = c_devloc(f4n(:,:))
+                        c_array3(5) = c_devloc(f1t(:,:))
+                        c_array3(6) = c_devloc(f2t(:,:))
+                        c_array3(7) = c_devloc(f3t(:,:))
+                        c_array3(8) = c_devloc(f4t(:,:))
+!!  $acc end kernels
 #endif
 
                         !batch1 = 4
@@ -642,7 +671,7 @@
                         beta = 0.0d0
 
                         print*, "starting dgemmbatch1"
-                        err = cublasDgemmBatched(
+                        err = cublasDgemmBatched_v2(
      &                        handle(1),
      &                        CUBLAS_OP_N, 
      &                        CUBLAS_OP_T,
@@ -660,7 +689,7 @@
 
                         print*, "starting dgemmbatch2"
 
-                        err = cublasDgemmBatched(
+                        err = cublasDgemmBatched_v2(
      &                        handle(2),
      &                        CUBLAS_OP_N,
      &                        CUBLAS_OP_N,
@@ -692,16 +721,16 @@
 
                         print*, "starting dgemmbatch3"
 
-                        err = cublasDgemmBatched(
+                        err = cublasDgemmBatched_v2(
      &                        handle(1),
      &                        CUBLAS_OP_N,
-     &                        CUBLAS_OP_T,
-     &                        nv4, nv4, nv4,
+     &                        CUBLAS_OP_N,
+     &                        nv4, nv4, no4,
      &                        -1.0d0,
      &                        a_array3, nv4,
      &                        b_array3, no4,
      &                        1.0d0,
-     &                        c_array3, no4,
+     &                        c_array3, nv4,
      &                        batch3)
                         if (err.ne.0) then
                           call errquit('cublasGemmBatched',
@@ -854,12 +883,12 @@
                         if (err.ne.0) then
                           call errquit('cublasDgemm_v2',err,UNKNOWN_ERR)
                         endif
-
+#endif
                         err = cudaDeviceSynchronize()
                         if (err.ne.0) then
                           call errquit('cudaDeviceSync',err,UNKNOWN_ERR)
                         endif
-#endif
+!#endif
                         ! 8 pairs of DGEMM w/ VVV and VVO cost, 2 for FMA
                         dgemm_flops = 8*nvir*nvir*(nocc+nvir)*2
                         agg_flops = agg_flops + dgemm_flops
