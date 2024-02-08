@@ -31,7 +31,6 @@
       double precision, allocatable, device :: f2t(:,:)
       double precision, allocatable, device :: f3t(:,:)
       double precision, allocatable, device :: f4t(:,:)
-#if 1      
       double precision, allocatable, pinned :: Tij(:), Tkj(:)
       double precision, allocatable, pinned :: Tia(:), Tka(:)
       double precision, allocatable, pinned :: Xia(:), Xka(:)
@@ -40,16 +39,6 @@
       double precision, allocatable, pinned :: Kia(:), Kka(:)
       double precision, allocatable, pinned :: Kij(:), Kkj(:)
       double precision, allocatable, pinned :: Dja(:), Djka(:), Djia(:)
-#else
-      double precision, allocatable, device:: Tij(:), Tkj(:)
-      double precision, allocatable, device :: Tia(:), Tka(:)
-      double precision, allocatable, device :: Xia(:), Xka(:)
-      double precision, allocatable, device :: Jia(:), Jka(:)
-      double precision, allocatable, device :: Jij(:), Jkj(:)
-      double precision, allocatable, device :: Kia(:), Kka(:)
-      double precision, allocatable, device :: Kij(:), Kkj(:)
-      double precision, allocatable, device :: Dja(:), Djka(:), Djia(:)
-#endif
       double precision, allocatable, device :: xTij(:), xTkj(:)
       double precision, allocatable, device :: xTia(:), xTka(:)
       double precision, allocatable, device :: xXia(:), xXka(:)
@@ -122,8 +111,7 @@
       type(cublasHandle) :: handle(8)
       integer(kind=cuda_stream_kind) :: stream(8)
 
-      !#define USE_CCSD_DGEMM_BATCH 1
-!defined(USE_CCSD_DGEMM_BATCH)
+#if defined(USE_CCSD_DGEMM_BATCH)
       integer(INT32) :: nv4, no4 ! cublasDgemm requires 32-bit integers
       integer(INT32), parameter :: batch1=4, batch2=4, batch3=8
       integer, parameter :: cu_op_n = CUBLAS_OP_N
@@ -137,7 +125,7 @@
       type(c_devptr), device, dimension(batch3) :: a_array3
       type(c_devptr), device, dimension(batch3) :: b_array3
       type(c_devptr), device, dimension(batch3) :: c_array3
-      double precision       :: alpha, beta
+#endif
 !
       nodes = ga_nnodes()
       me = ga_nodeid()
@@ -468,8 +456,7 @@
                         else
                            call qexit('accwait',0)
                         endif
-#if 1
-!defined(USE_CCSD_DGEMM_BATCH)
+#if defined(USE_CCSD_DGEMM_BATCH)
 
 
                         ! first two batches can be executed
