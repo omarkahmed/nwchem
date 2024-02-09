@@ -111,7 +111,7 @@
       type(cublasHandle) :: handle(8)
       integer(kind=cuda_stream_kind) :: stream(8)
 
-#if defined(USE_CCSD_DGEMM_BATCH)
+#ifdef USE_BATCHDGEMM_TRPDRV
       integer(INT32) :: nv4, no4 ! cublasDgemm requires 32-bit integers
       integer(INT32), parameter :: batch1=4, batch2=4, batch3=8
       integer, parameter :: cu_op_n = CUBLAS_OP_N
@@ -456,7 +456,7 @@
                         else
                            call qexit('accwait',0)
                         endif
-#if defined(USE_CCSD_DGEMM_BATCH)
+#ifdef USE_BATCHDGEMM_TRPDRV
 
 
                         ! first two batches can be executed
