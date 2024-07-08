@@ -5,6 +5,7 @@
       use iso_fortran_env
       use cudafor
       use cublas
+      use nvtx
       implicit none
 !
 #include "errquit.fh"
@@ -462,7 +463,7 @@
                         ! first two batches can be executed
                         ! simultaneously
   
-
+                        call nvtxStartRange("Create array pointers")
                         a_array1(1) = c_devloc(xJia(:))
                         a_array1(2) = c_devloc(xKia(:))
                         a_array1(3) = c_devloc(xJka(1+(k-klo)*lnvv:))
@@ -521,6 +522,10 @@
                         c_array3(7) = c_devloc(f3t(:,:))
                         c_array3(8) = c_devloc(f4t(:,:))
 
+                        call nvtxEndRange
+
+                        call nvtxStartRange("DGEMMs")
+
                         err = cublasDgemmBatched_v2(
      &                        handle(1),
      &                        CUBLAS_OP_N, 
@@ -574,6 +579,8 @@
                           call errquit('cublasGemmBatched_v2',
      &                                  err,UNKNOWN_ERR)
                         endif
+
+                        call nvtxEndRange
 
 
 #else

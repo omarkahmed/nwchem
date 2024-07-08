@@ -139,7 +139,7 @@ endif
 
 ifdef USE_OPENACC_TRPDRV
   OBJ_OPTIMIZE += ccsd_trpdrv_openacc.o
-  FOPTIONS += -DUSE_OPENACC_TRPDRV
+  FOPTIONS += -DUSE_OPENACC_TRPDRV -lnvhpcwrapnvtx -L/opt/hpc_software/sdk/nvidia/hpc_sdk/Linux_x86_64/24.5/compilers/lib
   ifeq ($(_FC),pgf90)
       FOPTIONS += -Mextend -acc -cuda -cudalib=cublas
   endif

@@ -3658,10 +3658,10 @@ endif
 
 ifdef NWCHEM_LINK_CUDA
     ifeq ($(_FC),pgf90)
-       CORE_LIBS += -acc -cuda -cudalib=cublas
+       CORE_LIBS += -acc -cuda -cudalib=cublas -lnvhpcwrapnvtx
     endif
     ifeq ($(_FC),gfortran)
-       CORE_LIBS +=  -fopenacc -lcublas
+       CORE_LIBS +=  -fopenacc -lcublas -lnvhpcwrapnvtx
     endif
 endif
 
