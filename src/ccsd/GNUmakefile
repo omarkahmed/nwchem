@@ -133,6 +133,13 @@ ifdef USE_IMAX_OPENMP_TRPDRV
   DEFINES += -DMKL_ILP64 
 
   INCLUDES += -I"${MKLROOT}/include" -I ${NWCHEM_TOP}/src/ccsd/module
+  ifdef USE_VTUNE
+    DEFINES += -DUSE_VTUNE
+    INCLUDES += -I${VTUNE_PROFILER_DIR}/include/intel64
+    LDOPTIONS += -L$(VTUNE_PROFILER_DIR)/lib64
+    EXTRA_LIBS += -littnotify
+  endif
+  
 
 endif
 

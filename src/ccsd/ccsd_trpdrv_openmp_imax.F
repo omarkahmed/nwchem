@@ -19,6 +19,9 @@
       use omp_lib
       use onemkl_blas_omp_offload_ilp64
       use reduction_data
+#ifdef USE_VTUNE
+      use ITTNOTIFY
+#endif
       implicit none
 !
 #include "errquit.fh"
@@ -399,6 +402,14 @@
          akold=0
          khi = min(nocc, klo+kchunk-1)
          do a=oseg_lo,oseg_hi
+#ifdef USE_VTUNE
+            if (a-(ncor+nocc)+((klo-1)/kchunk)*nvir.eq.
+     &         (nocc/kchunk)*nvir/2) then
+              write(*,*) "Starting collection, iteration: ",
+     &                   (a-(ncor+nocc)+((klo-1)/kchunk)*nvir)
+              CALL ITT_RESUME()
+            endif
+#endif
             av=a-ncor-nocc
             do j=1,nocc
                inode=inode+1
@@ -1146,7 +1157,15 @@
             endif
                end if
             end do
-         end do
+#ifdef USE_VTUNE
+            if (a-(ncor+nocc)+((klo-1)/kchunk)*nvir.eq.
+     &         (nocc/kchunk)*nvir/2) then
+              write(*,*) "Stopping collection, iteration: ",
+     &                   (a-(ncor+nocc)+((klo-1)/kchunk)*nvir)
+              CALL ITT_PAUSE()
+            endif
+#endif
+        end do
       end do
 
       print *, " "

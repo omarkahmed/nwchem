@@ -2461,6 +2461,8 @@ ifneq ($(TARGET),LINUX)
                         $(error )
                     endif
                     COPTIONS += -I$(VTUNE_AMPLIFIER_XE_DIR)/include
+                    FOPTIONS += -I$(VTUNE_AMPLIFIER_XE_DIR)/include/intel64
+#INCLUDES += -I${VTUNE_AMPLIFIER_XE_DIR}/include/intel64
                     FOPTIONS += -DUSE_VTUNE
                     LDOPTIONS += -L$(VTUNE_AMPLIFIER_XE_DIR)/lib64 
                     EXTRA_LIBS += -littnotify
