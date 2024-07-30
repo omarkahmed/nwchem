@@ -145,7 +145,6 @@ ifdef USE_OPENACC_TRPDRV
   ifeq ($(_FC),gfortran)
       FOPTIONS += -ffree-form -fopenacc -lcublas
   endif
-   USE_BATCHDGEMM_TRPDRV=1
 endif
 
 ifdef USE_BATCHDGEMM_TRPDRV
