@@ -110,12 +110,11 @@
       integer(INT32) :: shi
       type(cublasHandle) :: handle(8)
       integer(kind=cuda_stream_kind) :: stream(8)
-
-#ifdef USE_BATCHDGEMM_TRPDRV
       integer(INT32) :: nv4, no4 ! cublasDgemm requires 32-bit integers
+      integer(INT32), parameter :: cu_op_n = CUBLAS_OP_N
+      integer(INT32), parameter :: cu_op_t = CUBLAS_OP_T
+#ifdef USE_BATCHDGEMM_TRPDRV
       integer(INT32), parameter :: batch1=4, batch2=4, batch3=8
-      integer, parameter :: cu_op_n = CUBLAS_OP_N
-      integer, parameter :: cu_op_t = CUBLAS_OP_T
       type(c_devptr), device, dimension(batch1) :: a_array1
       type(c_devptr), device, dimension(batch1) :: b_array1
       type(c_devptr), device, dimension(batch1) :: c_array1
@@ -457,7 +456,9 @@
                            call qexit('accwait',0)
                         endif
 #ifdef USE_BATCHDGEMM_TRPDRV
-
+                        if(me.eq.0) then
+                           write(6,*) 'cublasDgemmBatched_v2'
+                        endif
 
                         ! first two batches can be executed
                         ! simultaneously
