@@ -456,13 +456,8 @@
                            call qexit('accwait',0)
                         endif
 #ifdef USE_BATCHDGEMM_TRPDRV
-                        if(me.eq.0) then
-                           write(6,*) 'cublasDgemmBatched_v2'
-                        endif
-
                         ! first two batches can be executed
                         ! simultaneously
-  
 
                         a_array1(1) = c_devloc(xJia(:))
                         a_array1(2) = c_devloc(xKia(:))
